@@ -4,7 +4,7 @@ CFLAGS = -g -Wall -std=c++17
 TARGET = main
 
 # List of directories
-DIRS = 1 2 3 4 5
+DIRS = $(shell find . -mindepth 1 -maxdepth 1 -type d)
 
 # Default target to build the main project
 all: $(TARGET)
