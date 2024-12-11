@@ -41,4 +41,13 @@ vector<string> split(const string &s, const string &delim) {
     return tokens;
 }
 
+int numDigits( int val ) {
+    int digits = 0;
+    while ( val ) {
+        val /= 10;
+        digits++;
+    }
+    return digits;
+}
+
 #endif
