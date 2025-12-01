@@ -3,3 +3,6 @@
 # C++ Object Files
 *.o
 *.obj
+
+# Any Input Files
+*input.txt
