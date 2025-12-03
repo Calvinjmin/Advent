@@ -16,7 +16,7 @@ int bank(const string& input) {
             first_loc = i;
             maxDigit = curr;
         }
-        if ( maxDigit == 9 ) break;
+        if ( maxDigit == 9 ) continue;
     }
 
     int secondDigit = -1;
@@ -35,6 +35,7 @@ int bank(const string& input) {
 // ensure there are enough options of digits available for 12-x
 unsigned long long bank_part2(const string& input ) {
     vector<int> digits;
+    digits.reserve(12);
 
     int digits_left = 12;
     int last = 0;
