@@ -6,3 +6,6 @@
 
 # Any Input Files
 *input.txt
+
+# VS Code Files
+*.vscode
