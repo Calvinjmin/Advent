@@ -9,86 +9,118 @@ vector<pair<unsigned long long, unsigned long long>> red_tiles;
 unsigned long long rows;
 unsigned long long cols;
 
-
-void printGrid( vector<vector<char>>& grid ) {
-    for ( auto r : grid ) {
-        for ( auto c: r ) {
+void printGrid(vector<vector<char>> &grid)
+{
+    for (auto r : grid) {
+        for (auto c : r) {
             cout << c;
         }
         cout << endl;
     }
 }
 
-bool validRec( pair<unsigned long long, unsigned long long> a, pair<unsigned long long, unsigned long long> b, vector<vector<char>> & grid ) {
+bool validRec(pair<unsigned long long, unsigned long long> a, pair<unsigned long long, unsigned long long> b)
+{
     unsigned long long minCol = min(a.first, b.first);
     unsigned long long maxCol = max(a.first, b.first);
     unsigned long long minRow = min(a.second, b.second);
     unsigned long long maxRow = max(a.second, b.second);
 
-    /* Define Rectangle
-        minRow, minCol       maxRow, minCol
+    int n = (int)red_tiles.size();
 
+    // 1. interior slice of rectangle
+    for (int i = 0; i < n; ++i)
+    {
+        auto p = red_tiles[i];
+        auto q = red_tiles[(i + 1) % n];
 
-        minRow, maxCol       maxRow,maxCol
-    */
+        unsigned long long x1 = p.first, y1 = p.second;
+        unsigned long long x2 = q.first, y2 = q.second;
 
-    // Check each corner in only its 2 relevant directions
-    vector<pair<pair<int,int>, vector<pair<int,int>>>> cornerChecks = {
-        {make_pair(minRow, minCol), {{-1, 0}, {0, -1}}},
-        {make_pair(minRow, maxCol), {{-1, 0}, {0, 1}}},
-        {make_pair(maxRow, minCol), {{1, 0}, {0, -1}}},
-        {make_pair(maxRow, maxCol), {{1, 0}, {0, 1}}}
-    };
-
-    for ( const auto& [point, directions] : cornerChecks ) {
-        if ( grid[point.first][point.second] == 'X' ||  grid[point.first][point.second] == '#') continue;
-
-        int currRow = point.first;
-        int currCol = point.second;
-
-        for ( const auto& dir: directions ) {
-            int newRow = currRow + dir.first;
-            int newCol = currCol + dir.second;
-
-            // Keep going until we hit 'X' or '#'
-            bool hitBoundary = false;
-            while ( newRow >= 0 && newRow < rows && newCol >= 0 && newCol < cols ) {
-                if ( grid[newRow][newCol] == 'X' || grid[newRow][newCol] == '#' ) {
-                    hitBoundary = true;
-                    break;
-                }
-                newRow += dir.first;
-                newCol += dir.second;
+        if (x1 == x2)
+        {
+            // vertical line
+            if (minCol < x1 && x1 < maxCol)
+            {
+                unsigned long long segMinY = min(y1, y2);
+                unsigned long long segMaxY = max(y1, y2);
+                unsigned long long lo = max(segMinY, minRow);
+                unsigned long long hi = min(segMaxY, maxRow);
+                if (lo < hi)
+                    return false;
             }
-
-            // If we exited the loop without hitting X or #, we went out of bounds without a boundary
-            if ( !hitBoundary ) {
-                return false;
+        }
+        else if (y1 == y2)
+        {
+            // horizontal edge
+            if (minRow < y1 && y1 < maxRow)
+            {
+                unsigned long long segMinX = min(x1, x2);
+                unsigned long long segMaxX = max(x1, x2);
+                unsigned long long lo = max(segMinX, minCol);
+                unsigned long long hi = min(segMaxX, maxCol);
+                if (lo < hi)
+                    return false; 
             }
         }
     }
-    return true;
+
+    // 2. go right and and cut
+    // center point of the rectangle and move to the right
+    double cx = (double)(minCol + maxCol) / 2.0;
+    double cy = (double)(minRow + maxRow) / 2.0;
+
+    // bool inside = false;
+    int inside = 0;
+    for (int i = 0; i < n; ++i)
+    {
+        auto p = red_tiles[i];
+        auto q = red_tiles[(i + 1) % n];
+
+        double x1 = (double)p.first;
+        double y1 = (double)p.second;
+        double x2 = (double)q.first;
+        double y2 = (double)q.second;
+
+        bool crossesY = ((y1 > cy) != (y2 > cy));
+        // only cross when the middle point makes sense to do so
+        if (crossesY)
+        {
+            double x_int = x1 + (cy - y1) * (x2 - x1) / (y2 - y1);
+            if (x_int > cx)
+            {
+                inside++;   // if it crosses twice, then this should be false
+            }
+        }
+    }
+
+    return inside < 2;
 }
 
-void part1() {
+void part1()
+{
     string file_path = "./input.txt";
     vector<string> lines = read_file(file_path);
 
     rows = -1;
     cols = -1;
 
-    for ( const string& s: lines ) {
+    for (const string &s : lines)
+    {
         vector<string> loc = split(s, ",");
-        cols = max(cols, stoull(loc[0]) + 1); 
-        rows = max(rows, stoull(loc[1]) + 1); 
-        red_tiles.emplace_back(make_pair(stoull(loc[0]), stoull(loc[1]))); 
+        cols = max(cols, stoull(loc[0]) + 1);
+        rows = max(rows, stoull(loc[1]) + 1);
+        red_tiles.emplace_back(make_pair(stoull(loc[0]), stoull(loc[1])));
     }
 
     // Brute Force
     unsigned long long maxArea = 0;
-    for ( int i = 0; i < red_tiles.size(); i++ ) {
-        for ( int j = 0; j < red_tiles.size(); j++ ) {
-            if ( i != j ) {
+    for (int i = 0; i < red_tiles.size(); i++)
+    {
+        for (int j = 0; j < red_tiles.size(); j++)
+        {
+            if (i != j)
+            {
                 auto a = red_tiles[i];
                 auto b = red_tiles[j];
 
@@ -103,74 +135,33 @@ void part1() {
     cout << "Answer: " << maxArea << endl;
 }
 
-// Answer too high - 4623431865
-void part2() {
+void part2()
+{
     string file_path = "./input.txt";
     vector<string> lines = read_file(file_path);
 
-    rows = 0;
-    cols = 0;
-
-    for ( const string& s: lines ) {
+    for (const string &s : lines)
+    {
         vector<string> loc = split(s, ",");
-        cols = max(cols, stoull(loc[0]));
-        rows = max(rows, stoull(loc[1]));
-        red_tiles.emplace_back(make_pair(stoull(loc[0]), stoull(loc[1]))); 
+        red_tiles.emplace_back(make_pair(stoull(loc[0]), stoull(loc[1])));
     }
 
-    rows += 2;
-    cols += 2;
-    vector<vector<char>> grid;
-    grid.resize(rows);
-    for (int i = 0; i < rows; i++) {
-        grid[i].resize(cols, '.'); 
-    }
-
-    for ( pair<int,int> p : red_tiles ) {
-        grid[p.second][p.first] = '#'; 
-    }
-
-    // 1. Create a border around the tiles
-    //  - loop through all the points and find straight line edges
-    for ( int i = 0; i < red_tiles.size(); i++ ) {
-        auto p1 = red_tiles[i]; 
-        for ( int j = i + 1; j < red_tiles.size(); j++ ) {
-            auto p2 = red_tiles[j];
-
-            // Boarder has to be on a straight line
-            if ( p1.first == p2.first ) {
-                // same col 
-                int minRow = min(p1.second, p2.second);
-                int maxRow = max(p1.second, p2.second);
-
-                for ( int row = minRow; row <= maxRow; row++ ) {
-                    if ( grid[row][p1.first] == '.' ) {
-                        grid[row][p1.first] = 'X';
-                    }
-                }
-            } else if ( p1.second == p2.second ) {
-                // same row 
-                int minCol = min(p1.first, p2.first);
-                int maxCol = max(p1.first, p2.first);
-
-                // Mark all points between as border
-                for ( int col = minCol; col <= maxCol; col++ ) {
-                    if ( grid[p1.second][col] == '.' ) {
-                        grid[p1.second][col] = 'X';
-                    }
-                }
-            }
-        }
-    }
-    // printGrid(grid);
-
-    // 2. Find the max area of a recetangle that exists within the boarder
+    // 1. Find the max area of a recetangle that exists within the boarder
+    // Idea from friend
+    // a. create a recetangle given two points
+    // b. loop through the red_tiles and create edges between them
+    // c. if the edges slice the recetangle at any point only going right, return false - not valid
+    // d. if the edge is vertical, go right and if you cross two boaders then should false
+    // f. else return true
     unsigned long long maxArea = 0;
 
-    for ( int i = 0; i < red_tiles.size(); i++ ) {
+    for (int i = 0; i < red_tiles.size(); i++)
+    {
         // cout << i << " out of " << red_tiles.size() << endl;
-        for ( int j = 0; j < red_tiles.size(); j++ ) {
-            if ( i != j ) {
+        for (int j = 0; j < red_tiles.size(); j++)
+        {
+            if (i != j)
+            {
                 auto a = red_tiles[i];
                 auto b = red_tiles[j];
 
@@ -178,22 +169,24 @@ void part2() {
                 unsigned long long height = (b.second > a.second ? b.second - a.second : a.second - b.second) + 1;
 
                 // Optimize
-                if ( width * height <= maxArea ) { 
+                if (width * height <= maxArea)
+                {
                     continue;
                 }
 
-                if ( validRec(a,b, grid) ) {
-                    maxArea = max(maxArea, width * height);
+                if (validRec(a, b))
+                {
+                    maxArea = width * height;
                 }
             }
         }
     }
 
     cout << "Answer: " << maxArea << endl;
-
 }
 
-int main() {
-    //part1();
+int main()
+{
+    // part1();
     part2();
 }
